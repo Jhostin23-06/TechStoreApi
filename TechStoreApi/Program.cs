@@ -1,19 +1,42 @@
+using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
+using TechStore.Domain.Interfaces;
 using TechStore.Infrastructure.Data;
+using TechStore.Infrastructure.Repositories;
+using System.Text.Json.Serialization;
+
+Env.Load();
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    }); builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Configure database context
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "root";
+var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "";
+
+if (!string.IsNullOrEmpty(connectionString) && !connectionString.EndsWith(";"))
+{
+    connectionString += ";";
+}
+connectionString += $"User={dbUser};Password={dbPassword};";
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
+
+// Register application services
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<IProductRepository, TechStore.Infrastructure.Repositories.ProductRepository>();
+builder.Services.AddScoped<TechStore.Domain.Interfaces.IClientRepository, TechStore.Infrastructure.Repositories.ClientRepository>();
+builder.Services.AddScoped<TechStore.Domain.Interfaces.ISaleRepository, TechStore.Infrastructure.Repositories.SaleRepository>();
 
 var app = builder.Build();
 
