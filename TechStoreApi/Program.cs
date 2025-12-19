@@ -30,6 +30,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // Register application services
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<IProductRepository, TechStore.Infrastructure.Repositories.ProductRepository>();
+builder.Services.AddScoped<TechStore.Domain.Interfaces.IClientRepository, TechStore.Infrastructure.Repositories.ClientRepository>();
 
 var app = builder.Build();
 
