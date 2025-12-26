@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace TechStore.Domain.Entities
 {
@@ -21,7 +22,9 @@ namespace TechStore.Domain.Entities
         public string MetodoPago { get; set; } = string.Empty;
 
         // Relaciones
+        [JsonIgnore]
         public virtual Client? Cliente { get; set; }
+        [JsonIgnore]
         public virtual ICollection<SaleDetail> Detalles { get; set; } = new List<SaleDetail>();
     }
 }

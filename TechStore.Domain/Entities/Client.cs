@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace TechStore.Domain.Entities
 {
@@ -20,6 +21,7 @@ namespace TechStore.Domain.Entities
         public string Email { get; set; } = string.Empty;
 
         // Relación: Un cliente realiza muchas compras
+        [JsonIgnore]
         public virtual ICollection<Sale> Ventas { get; set; } = new List<Sale>();
     }
 }

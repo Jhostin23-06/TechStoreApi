@@ -1,13 +1,14 @@
 using DotNetEnv;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using TechStore.Domain.Interfaces;
 using TechStore.Infrastructure.Data;
 using TechStore.Infrastructure.Repositories;
-using System.Text.Json.Serialization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-using Microsoft.OpenApi.Models;
 
 Env.Load();
 
@@ -17,18 +18,31 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
+        // ESTAS 3 CONFIGURACIONES SON CLAVE
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.MaxDepth = 64; // Aumentar profundidad máxima
+        options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+
+        // Configuraciones adicionales recomendadas
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.WriteIndented = true;
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     }); builder.Services.AddEndpointsApiExplorer();
 
+// Configuración CORS más específica y segura
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy =>
         {
+            var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>()
+                ?? new[] { "http://localhost:3000", "http://localhost:5173" };
+
             policy
-                .WithOrigins("http://localhost:3000")
+                .WithOrigins(allowedOrigins) // Especifica los orígenes permitidos
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials(); // IMPORTANTE: Permite credenciales (cookies, auth headers)
         });
 });
 
@@ -82,7 +96,7 @@ builder.Services.AddScoped<TechStore.Domain.Interfaces.IClientRepository, TechSt
 builder.Services.AddScoped<TechStore.Domain.Interfaces.ISaleRepository, TechStore.Infrastructure.Repositories.SaleRepository>();
 
 var jwtKey = builder.Configuration["Jwt:Key"];
-var keyBytes = Encoding.UTF8.GetBytes(jwtKey);
+var keyBytes = Encoding.UTF8.GetBytes(jwtKey!);
 
 builder.Services.AddAuthentication(config => {
     config.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -109,9 +123,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
 app.UseCors("AllowFrontend");
+
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 

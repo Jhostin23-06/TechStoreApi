@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace TechStore.Domain.Entities
 {
@@ -22,7 +23,9 @@ namespace TechStore.Domain.Entities
         public decimal Subtotal { get; set; }
 
         // Relaciones
+        [JsonIgnore]
         public virtual Sale? Venta { get; set; }
+        [JsonIgnore]
         public virtual Product? Producto { get; set; }
 
     }
